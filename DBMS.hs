@@ -16,26 +16,20 @@ command :: [Char] -> IO (Bool)
 command "exit" = return False
 command _      = putStrLn "Not a command!" >>= (\_ -> return True)
 
-
 -------------------- CREATE AND REMOVE DIR ----------------
 createBase :: FilePath -> IO ()
 createBase = (`catchIOError` err) . createDirectory
-    where
-    err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
 
 removeBase :: FilePath -> IO ()
 removeBase = (`catchIOError` err) . removeDirectory 
-    where
-    err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
 
 ------------------- CREATE AND REMOVE FILE ------------------
 createData :: FilePath -> IO ()
 createData = (`catchIOError` err) . (`writeFile` "") . (++) ".data"
-    where
-    err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
 
 removeData :: FilePath -> IO ()
 removeData = (`catchIOError` err) . removeFile . (++) ".data"
-    where
-    err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
 
+------------------- DBMS.Error ----------------
+err :: IOError -> IO ()
+err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
