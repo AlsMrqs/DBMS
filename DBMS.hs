@@ -2,19 +2,37 @@ module DBMS where
 
 import System.Directory (createDirectory,removeDirectory,doesFileExist,removeFile)
 import System.IO        (writeFile,readFile)
-import System.IO.Error  (catchIOError,tryIOError)
+import System.IO.Error  (catchIOError,tryIOError,userError)
 
 import Data.Bool        (bool)
 import Data.Map         (fromList)
 
 main :: IO ()
-main = do
-    putStr "DBMS: "
-    bool (return ()) main =<< command =<< getLine
+main = return ()
 
-command :: [Char] -> IO (Bool)
-command "exit" = return False
-command _      = putStrLn "Not a command!" >>= (\_ -> return True)
+function :: [[Char]] -> IO ()
+function    []    = return ()
+function (x:xs)
+    | x == "data" = do
+        createBase $ head xs
+        putStrLn $ "Base.Created!\ntail xs:" ++ show (tail xs)
+        function (tail xs)
+    | x == "="    = do
+        createData $ x ++ "/" ++ head xs
+        putStrLn $ "Data.Created!\ntail xs:" ++ show (tail xs)
+        function (tail xs)
+   | otherwise    = return ()
+
+decoder :: [[Char]] -> [IO ()]
+decoder x | x == [] = [return ()]
+decoder ("data":xs) = createBase (head xs) : decoder (tail xs)
+decoder ("alpha":xs) = putStrLn "alpha processed!" : decoder (xs)
+decoder _           = [putStrLn =<< readFile "Alpha.hs"]
+
+
+f ("alpha":xs) = putStrLn "alpha"
+f ("beta" :xs) = putStrLn "beta"
+f (x:xs)       = return ()
 
 -------------------- CREATE AND REMOVE DIR ----------------
 createBase :: FilePath -> IO ()
@@ -25,11 +43,12 @@ removeBase = (`catchIOError` err) . removeDirectory
 
 ------------------- CREATE AND REMOVE FILE ------------------
 createData :: FilePath -> IO ()
-createData = (`catchIOError` err) . (`writeFile` "") . (++) ".data"
+createData = (`catchIOError` err) . (`writeFile` "") . (++ ".data")
 
 removeData :: FilePath -> IO ()
-removeData = (`catchIOError` err) . removeFile . (++) ".data"
+removeData = (`catchIOError` err) . removeFile . (++ ".data")
 
-------------------- DBMS.Error ----------------
+------------------- DBMS.IO.Error ----------------
 err :: IOError -> IO ()
 err e = putStrLn $ "DBMS.Error:\n" ++ (show e)
+
