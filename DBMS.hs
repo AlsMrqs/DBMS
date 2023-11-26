@@ -10,40 +10,45 @@ import Data.Map         (fromList)
 main :: IO ()
 main = return ()
 
-function :: [[Char]] -> IO ()
-function    []    = return ()
-function (x:xs)
-    | x == "data" = do
-        createBase $ head xs
-        putStrLn $ "Base.Created!\ntail xs:" ++ show (tail xs)
-        function (tail xs)
-    | x == "="    = do
-        createData $ x ++ "/" ++ head xs
-        putStrLn $ "Data.Created!\ntail xs:" ++ show (tail xs)
-        function (tail xs)
-   | otherwise    = return ()
+--function :: [[Char]] -> IO ()
+--function    []    = return ()
+--function (x:xs)
+--    | x == "data" = do
+--        createBase $ head xs
+--        putStrLn $ "Base.Created!\ntail xs:" ++ show (tail xs)
+--        function (tail xs)
+--    | x == "="    = do
+--        createData $ x ++ "/" ++ head xs
+--        putStrLn $ "Data.Created!\ntail xs:" ++ show (tail xs)
+--        function (tail xs)
+--   | otherwise    = return ()
 
-decoder :: [[Char]] -> [IO ()]
-decoder x | x == [] = [return ()]
-decoder ("data":xs) = createBase (head xs) : decoder (tail xs)
-decoder ("alpha":xs) = putStrLn "alpha processed!" : decoder (xs)
-decoder _           = [putStrLn =<< readFile "Alpha.hs"]
+decoder :: [[Char]] -> IO ()
+decoder x | x == [] = return ()
+decoder ("data":xs) = database xs
 
-
-f ("alpha":xs) = putStrLn "alpha"
-f ("beta" :xs) = putStrLn "beta"
-f (x:xs)       = return ()
+database :: [[Char]] -> IO ()
+database (x:xs) = do
+    xbase  <- createBase x
+    tailxs <- bool (error "Invalid sintax!") (return $ tail xs) (head xs == "=")
+    xdata <- createData xbase (head tailxs)
+    writeFile xdata (unwords $ tail tailxs)
 
 -------------------- CREATE AND REMOVE DIR ----------------
-createBase :: FilePath -> IO ()
-createBase = (`catchIOError` err) . createDirectory
+createBase :: FilePath -> IO FilePath
+createBase l = do
+    catchIOError (createDirectory l) err
+    return l 
 
 removeBase :: FilePath -> IO ()
 removeBase = (`catchIOError` err) . removeDirectory 
 
 ------------------- CREATE AND REMOVE FILE ------------------
-createData :: FilePath -> IO ()
-createData = (`catchIOError` err) . (`writeFile` "") . (++ ".data")
+createData :: FilePath -> FilePath -> IO FilePath
+createData bas dat = do
+    let dataFile = (bas ++ "/" ++ dat ++ ".data")
+    (`catchIOError` err) $ writeFile dataFile ""
+    return dataFile
 
 removeData :: FilePath -> IO ()
 removeData = (`catchIOError` err) . removeFile . (++ ".data")
