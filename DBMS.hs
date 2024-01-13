@@ -1,34 +1,36 @@
 module DBMS.DBMS where
 
 import System.Directory (createDirectory,removeDirectory,doesFileExist,removeFile)
-import System.IO        (writeFile,readFile)
 import System.IO.Error  (catchIOError,tryIOError,userError)
+import System.IO        (writeFile,readFile)
 
+import Data.Char        (isAlpha,isNumber,isUpper)
 import Data.Bool        (bool)
 import Data.Map         (fromList)
 
+import qualified DBMS.Parser as Parse         
+
+----------------------NODES------------------------------
+
 decode :: [[Char]] -> IO ()
-decode ("data":xs) = database xs 
-decode ("drop":xs) = dropbase xs
-decode x           = can't "decode" x
+decode ("data":xs) = _data xs 
+decode x           = invalid "decode" x
 
 --------------------DECODER FUNCTIONS---------------------
 
-database :: [[Char]] -> IO ()
-database [str] = putStrLn $ "Database "++str++" created!"
-database x     = can't "database" x
+_data :: [[Char]] -> IO ()
+_data (x:xs) = either (\_ -> assign xs) putStrLn (Parse.constructor x)
+_data x      = invalid "data " x
 
-parser :: [[Char]] -> IO ()
-parser ["="] = putStrLn "Database is updated!"
-parser _     = putStrLn "Invalid Input to a Data!!"
+invalid :: [Char] -> [[Char]] -> IO ()
+invalid str [] = return =<< putStrLn $ "Empty "  ++str++"!"
+invalid str _  = return =<< putStrLn $ "Invalid "++str++"!"
 
-dropbase :: [[Char]] -> IO ()
-dropbase [str] = putStrLn $ "Database "++str++" dropped!"
-dropbase x     = can't "dropbase" x
+----------------------DEALING WITH DATA--------------------
 
-can't :: [Char] -> [[Char]] -> IO ()
-can't str [] = return =<< putStrLn $ "Empty "   ++ str ++ "!"
-can't str _  = return =<< putStrLn $ "Invalid " ++ str ++ "!"
+assign :: [[Char]] -> IO ()
+assign ("=":xs) = putStrLn "Database was started but not written!"
+assign x        = invalid "connect" x
 
 -------------------- CREATE AND REMOVE DIR ----------------
 
